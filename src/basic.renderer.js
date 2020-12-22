@@ -32,18 +32,49 @@
             //testar cada triangulo
         }
         else if (shape === "triangle") {
-            //[2]
+            //[2] (talvez resolver com cross product seja mais facil)
             //retas normais vao ser pra dentro, logo o angulo deve ser agudo, o PI nao pode ser negativo
-            //
+            // - descobrir vetor normal (resolver equacao)
+                //- como definir um vetor normal pra dentro?
+
+                //- como resolver equacao com infinitos resultados?
+            // - fazer produto escalar do "vetor q" com o vetor normal
+            // - verificar se é positivo (dentro) ou negativo (fora)
         }
         else if (shape === "polygon") {
             //[3]
-            //dividir em triangulos
-            //testar cada triangulo
+            //fan triangulation ou winding/crossing number
         }
         else {
             throw "Choose between possible primitives: circle, triangle, polygon";
         }
+    }
+
+    function boundObject(primitive){
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
+        
+        for (let vertex of primitive.vertices){
+            if(vertex[0] < minX){
+                minX = vertex[0];
+            }
+            if(vertex[0] > maxX){
+                maxX = vertex[0];
+            }
+            if(vertex[1] < minY){
+                minY = vertex[1];
+            }
+            if(vertex[1] > maxY){
+                maxY = vertex[1];
+            }
+        }
+        //adicionar propriedades com os boundaries
+        primitive.minX = minX;
+        primitive.maxX = maxX;
+        primitive.minY = minY;
+        primitive.maxY = maxY;
     }
 
 
@@ -61,36 +92,12 @@
             // You may define bounding boxes, convert shapes, etc
 
             var preprop_scene = [];
-            let minX = Infinity;
-            let maxX = -Infinity;
-            let minY = Infinity;
-            let maxY = -Infinity;
 
             for (var primitive of scene) {
-                //iterar pelos vertices (fazer uma funcao)
-                for (let vertex of scene.vertices){
-                    if(vertex[0] < minX){
-                        minX = vertex[0];
-                    }
-                    if(vertex[0] > maxX){
-                        maxX = vertex[0];
-                    }
-                    if(vertex[1] < minY){
-                        minY = vertex[1];
-                    }
-                    if(vertex[1] > maxY){
-                        maxY = vertex[1];
-                    }
-                }
-
-                //adicionar propriedades com os boundaries
-                primitive.minX = minX;
-                primitive.maxX = maxX;
-                primitive.minY = minY;
-                primitive.maxY = maxY;
-
+                //[4]calcular transformacoes afins
+                //[5]passar numeros para arrays do numjs
+                boundObject(primitive);
                 preprop_scene.push(primitive);
-
             }
 
 
