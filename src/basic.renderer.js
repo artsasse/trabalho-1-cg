@@ -32,14 +32,33 @@
             //testar cada triangulo
         }
         else if (shape === "triangle") {
-            //[2] (talvez resolver com cross product seja mais facil)
-            //retas normais vao ser pra dentro, logo o angulo deve ser agudo, o PI nao pode ser negativo
-            // - descobrir vetor normal (resolver equacao)
-                //- como definir um vetor normal pra dentro?
-
-                //- como resolver equacao com infinitos resultados?
-            // - fazer produto escalar do "vetor q" com o vetor normal
-            // - verificar se é positivo (dentro) ou negativo (fora)
+            //[2] Produto Vetorial
+            let p0 = primitive.vertices[0];
+            let p1 = primitive.vertices[1];
+            let p2 = primitive.vertices[2];
+            //p1 - p0
+            let u = [p1[0] - p0[0], p1[1] - p0[1]];
+            //p2 - p1
+            let v = [p2[0] - p1[0], p2[1] - p1[1]];
+            //p0 - p2
+            let w = [p0[0] - p2[0], p0[1] - p2[1]];
+            let point = [x,y];
+            //Verificar orientacao do triangulo
+            let triangleOrientation = isCounterClockwise(u,v);
+            //verificar se ponto esta dentro do triangulo
+            //teste com p0 e u
+            if(!hasSameOrientation(point, p0, u, triangleOrientation)){
+                return false;
+            }
+            //teste com p1 e v
+            if(!hasSameOrientation(point, p1, v, triangleOrientation)){
+                return false;
+            }
+            //teste com p2 e w
+            if(!hasSameOrientation(point, p2, w, triangleOrientation)){
+                return false;
+            }
+            return true;
         }
         else if (shape === "polygon") {
             //[3]
@@ -77,6 +96,42 @@
         primitive.maxY = maxY;
     }
 
+    function boundObjects(primitives){
+        for(let primitive of primitives){
+            boundObject(primitive);
+        }
+    }
+
+    function transformObject(primitive){ //so somar o vetor de translacao ou estender os vetores de pontos para 3 dimensoes?
+        //converter matriz 3x3 e pontos em nj.array
+        let matrix = nj.array(primitive.xform);
+        for (let vertex of primitive.vertices){
+            vertex = nj.array(vertex);
+        }
+        //fatiar a matriz de transformacao afim
+        let linearTransformationMatrix = matrix.slice([0,2], [0,2]);
+        let translationVector = matrix.slice(2,[0,2]);
+        
+        //aplicar a transformacao afim
+        for (let vertex of primitive.vertices){
+            //somar vetor de translacao aos pontos
+            vertex.add(translationVector, false);
+            //aplicar matriz 2x2 de transformacao linear nos pontos
+            vertex = nj.dot(linearTransformationMatrix,vertex.T)
+        }
+
+        //converter tudo para array normal de novo
+        for (let vertex of primitive.vertices){
+            vertex = vertex.tolist();
+        }
+    }
+
+    function transformObjects(primitives){
+        for(let primitive of primitives){
+            transformObject(primitive);
+        }
+    }
+
 
     function Screen(width, height, scene) {
         this.width = width;
@@ -85,19 +140,83 @@
         this.createImage();
     }
 
+    function transformObjects(primitives){
+
+    }
+
+    function crossProduct2D(u,v){
+        let r1 = u[0] * v[1];
+        let r2 = u[1] * v[0];
+        return r1 - r2;
+    }
+
+    function isCounterClockwise(u,v){
+        let result = crossProduct2D(u,v)
+        if(result > 0){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
+    function hasSameOrientation(point, edge, vector, objOrientation){
+        let orientation;
+        let testedVector = [point[0] - edge[0], point[1] - edge[1]];
+        orientation = isCounterClockwise(vector,testedVector);
+        return orientation === objOrientation;
+    }
+
+    function fanTriangulation(primitive){
+        let triangles = [];
+        let triangle;
+        let n = primitive.vertices.length - 2;
+        let vertices = primitive.vertices;
+        let i = 1;
+        while(n > 0){
+            triangle = {  
+                shape: "triangle",
+                vertices: [vertices[0], vertices[i], vertices[i+1]],
+                color: primitive.color    
+            }
+            triangles.push(triangle); //os triangulos vao ficar iguais?
+            i++;
+            n--;
+        }
+        return triangles;
+    }
+
+    function pushPrimitives(primitives, preprop_scene){
+        for (let primitive of primitives){
+            preprop_scene.push(primitive);
+        }
+    }
+
     Object.assign(Screen.prototype, {
 
         preprocess: function (scene) {
-            // Possible preprocessing with scene primitives, for now we don't change anything
-            // You may define bounding boxes, convert shapes, etc
 
             var preprop_scene = [];
+            let primitives;
 
             for (var primitive of scene) {
+                //triangular poligono
+                if(primitive.shape === "polygon"){
+                    primitives = fanTriangulation(primitive);
+                }
+                // else if(primitive.shape === "circle"){
+                //     primitives = circleTriangulation(primitive);
+                // }
+                else if(primitive.shape === "triangle"){
+                    primitives = [primitive];
+                }
+                
                 //[4]calcular transformacoes afins
-                //[5]passar numeros para arrays do numjs
-                boundObject(primitive);
-                preprop_scene.push(primitive);
+                transformObjects(primitives);
+
+                boundObjects(primitives);
+
+                pushPrimitives(primitives, preprop_scene);
             }
 
 
