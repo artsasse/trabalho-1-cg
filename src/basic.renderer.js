@@ -26,12 +26,7 @@
             return false;
         }
 
-        if (shape === "circle") {
-            //[1]
-            //dividir em triangulos
-            //testar cada triangulo
-        }
-        else if (shape === "triangle") {
+        if (shape === "triangle") {
             //[2] Produto Vetorial
             let p0 = primitive.vertices[0];
             let p1 = primitive.vertices[1];
@@ -60,12 +55,8 @@
             }
             return true;
         }
-        else if (shape === "polygon") {
-            //[3]
-            //fan triangulation ou winding/crossing number
-        }
         else {
-            throw "Choose between possible primitives: circle, triangle, polygon";
+            throw "Transform your object in triangles before using this function.";
         }
     }
 
@@ -89,7 +80,7 @@
                 maxY = vertex[1];
             }
         }
-        //adicionar propriedades com os boundaries
+
         primitive.minX = minX;
         primitive.maxX = maxX;
         primitive.minY = minY;
@@ -159,9 +150,9 @@
         }
     }
 
-    function hasSameOrientation(point, edge, vector, objOrientation){
+    function hasSameOrientation(testedPoint, edge, vector, objOrientation){
         let orientation;
-        let testedVector = [point[0] - edge[0], point[1] - edge[1]];
+        let testedVector = [testedPoint[0] - edge[0], testedPoint[1] - edge[1]];
         orientation = isCounterClockwise(vector,testedVector);
         return orientation === objOrientation;
     }
