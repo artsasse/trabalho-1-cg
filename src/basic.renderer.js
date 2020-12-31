@@ -102,28 +102,31 @@
         }
     }
 
-    function transformObject(primitive){ //so somar o vetor de translacao ou estender os vetores de pontos para 3 dimensoes?
-        //converter matriz 3x3 e pontos em nj.array
-        let matrix = nj.array(primitive.xform);
-        for (let vertex of primitive.vertices){
-            vertex = nj.array(vertex);
-        }
-        //fatiar a matriz de transformacao afim
-        let linearTransformationMatrix = matrix.slice([0,2], [0,2]);
-        let translationVector = matrix.slice(2,[0,2]);
-        
-        //aplicar a transformacao afim
-        for (let vertex of primitive.vertices){
-            //somar vetor de translacao aos pontos
-            vertex.add(translationVector, false);
-            //aplicar matriz 2x2 de transformacao linear nos pontos
-            vertex = nj.dot(linearTransformationMatrix,vertex.T)
-        }
+    function transformObject(primitive){
 
-        //converter tudo para array normal de novo
-        for (let vertex of primitive.vertices){
-            vertex = vertex.tolist();
-        }
+        let vertices = primitive.vertices;
+
+        //converter matriz de transformacao afim para nj.array
+        let matrix = nj.array(primitive.xform);
+        
+        //fatiar a matriz de transformacao afim
+        let linearTransformationMatrix = matrix.slice([0,2],[0,2]);
+        let translationVector = matrix.slice([0,2],2).flatten();
+        
+        //aplicar a transformacao afim  
+        vertices.forEach(function(item, index){
+            //converter vertice para nj.array
+            vertices[index] = nj.array(vertices[index]);
+        
+            //aplicar matriz 2x2 de transformacao linear nos pontos
+            vertices[index] = nj.dot(linearTransformationMatrix,vertices[index]);
+
+            //somar vetor de translacao aos pontos
+            vertices[index].add(translationVector, false);
+
+            //converter tudo para array normal de novo
+            vertices[index] = vertices[index].tolist();
+        })
     }
 
     function transformObjects(primitives){
@@ -138,10 +141,6 @@
         this.height = height;
         this.scene = this.preprocess(scene);
         this.createImage();
-    }
-
-    function transformObjects(primitives){
-
     }
 
     function crossProduct2D(u,v){
@@ -174,12 +173,22 @@
         let vertices = primitive.vertices;
         let i = 1;
         while(n > 0){
-            triangle = {  
-                shape: "triangle",
-                vertices: [vertices[0], vertices[i], vertices[i+1]],
-                color: primitive.color    
+            if(primitive.hasOwnProperty('xform')){
+                triangle = {  
+                    shape: "triangle",
+                    vertices: [vertices[0], vertices[i], vertices[i+1]],
+                    color: primitive.color,
+                    xform: primitive.xform   
+                }
             }
-            triangles.push(triangle); //os triangulos vao ficar iguais?
+            else{
+                triangle = {  
+                    shape: "triangle",
+                    vertices: [vertices[0], vertices[i], vertices[i+1]],
+                    color: primitive.color    
+                }
+            }
+            triangles.push(triangle);
             i++;
             n--;
         }
@@ -212,7 +221,9 @@
                 }
                 
                 //[4]calcular transformacoes afins
-                transformObjects(primitives);
+                if (primitive.hasOwnProperty('xform')){
+                    transformObjects(primitives);
+                }
 
                 boundObjects(primitives);
 
