@@ -195,6 +195,45 @@
         return triangles;
     }
 
+    function circleTriangulation(primitive){
+        let triangles = [];
+        let center = primitive.center;
+        let radius = primitive.radius;
+        let n = 39; //numero maximo de triangulos antes de "bugar"
+        let i = 0;
+        let angle = 2*Math.PI/n
+        let triangle, angle1, angle2, vertex1, vertex2;
+
+        while(n > 0){
+            //usamos as coordenadas polares para representar os pontos da circunferencia
+            angle1 = angle * i;
+            angle2 = angle * (i + 1);
+            vertex1 = [(radius * Math.cos(angle1)) + center[0], (radius * Math.sin(angle1)) + center[1]];
+            vertex2 = [(radius * Math.cos(angle2)) + center[0], (radius * Math.sin(angle2)) + center[1]];
+
+            if(primitive.hasOwnProperty('xform')){
+                triangle = {  
+                    shape: "triangle",
+                    vertices: [center, vertex1, vertex2],
+                    color: primitive.color,
+                    xform: primitive.xform   
+                }
+            }
+            else{
+                triangle = {  
+                    shape: "triangle",
+                    vertices: [center, vertex1, vertex2],
+                    color: primitive.color    
+                }
+            }
+
+            triangles.push(triangle);
+            n--;
+            i++;
+        }
+        return triangles;
+    }
+
     function pushPrimitives(primitives, preprop_scene){
         for (let primitive of primitives){
             preprop_scene.push(primitive);
@@ -213,18 +252,19 @@
                 if(primitive.shape === "polygon"){
                     primitives = fanTriangulation(primitive);
                 }
-                // else if(primitive.shape === "circle"){
-                //     primitives = circleTriangulation(primitive);
-                // }
+                else if(primitive.shape === "circle"){
+                    primitives = circleTriangulation(primitive);
+                }
                 else if(primitive.shape === "triangle"){
                     primitives = [primitive];
                 }
                 
-                //[4]calcular transformacoes afins
+                //calcular transformacoes afins
                 if (primitive.hasOwnProperty('xform')){
                     transformObjects(primitives);
                 }
 
+                //gerar bounding boxes
                 boundObjects(primitives);
 
                 pushPrimitives(primitives, preprop_scene);
